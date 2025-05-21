@@ -821,8 +821,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
-
     // Update keyboard shortcut handler
     document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
@@ -1083,4 +1081,37 @@ function updateRemovalModeUI() {
     } else {
         indicator.style.display = 'none';
     }
+}
+
+// Function to download chart as PNG
+function downloadChart(chartId) {
+    const chart = Chart.getChart(chartId);
+    if (!chart) {
+        console.error('Chart not found:', chartId);
+        return;
+    }
+
+    // Get the chart's canvas
+    const canvas = document.getElementById(chartId);
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.download = `${chartId}-${new Date().toISOString().split('T')[0]}.png`;
+    
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+        // Create object URL from blob
+        const url = URL.createObjectURL(blob);
+        
+        // Set link href to object URL
+        link.href = url;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 'image/png');
 } 
