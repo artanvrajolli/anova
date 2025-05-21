@@ -50,6 +50,99 @@
         #dataGrid tbody tr:nth-child(odd) {
             background-color: transparent;
         }
+
+        /* ANOVA Results Info Icons */
+        #anovaResults .bi-info-circle {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-left: 0.25rem;
+            cursor: help;
+            vertical-align: middle;
+        }
+
+        #anovaResults .bi-info-circle:hover {
+            color: #0d6efd;
+        }
+
+        #anovaResults p {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        #anovaResults .value {
+            margin-left: 0.5rem;
+        }
+
+        .grid-controls {
+            margin-bottom: 1rem;
+        }
+
+        .grid-controls-main {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .file-upload {
+            position: relative;
+        }
+
+        .file-upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #0d6efd;
+            background-color: transparent;
+            border: 1px solid #0d6efd;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .file-upload-label:hover {
+            color: #fff;
+            background-color: #0d6efd;
+        }
+
+        .file-upload-label i {
+            font-size: 1rem;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+
+        .btn-outline-warning {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #ffc107;
+            background-color: transparent;
+            border: 1px solid #ffc107;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-outline-warning:hover {
+            color: #000;
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .btn-outline-warning i {
+            font-size: 1rem;
+        }
     </style>
 </head>
 
@@ -61,7 +154,6 @@
                 <img src="./images/fiek-logo.png" alt="FIEK Logo" height="200" width="200" class="me-4"/>
                 <div class="header-titles text-start">
                     <h1 class="mb-1">ANOVA Score Analysis</h1>
-                    <div class="subtitle text-muted">Enter your score data in the grid below or upload a CSV file</div>
                     <div class="faculty-info text-muted" style="font-size:0.95rem;">Faculty of Electrical and Computer Engineering<br>University of Prishtina</div>
                 </div>
               
@@ -83,7 +175,7 @@
 
                         <div class="grid-controls">
                             <div class="grid-controls-main">
-                                <button class="btn btn-outline-warning btn-sm" onclick="resetGrid()">
+                                <button class="btn btn-outline-warning" onclick="resetGrid()">
                                     <i class="bi bi-trash"></i> Clear Grid
                                 </button>
                                 <div class="file-upload">

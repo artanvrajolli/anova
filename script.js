@@ -182,14 +182,66 @@ function updateANOVA(data) {
 
     const anovaResult = calculateANOVA(groups);
     anovaDiv.innerHTML = `
-        <p><strong>F-statistic:</strong> <span class="value">${formatNumber(anovaResult.fStat)}</span></p>
-        <p><strong>P-value:</strong> <span class="value">${anovaResult.pValue.toExponential(4)}</span></p>
-        <p><strong>Significance:</strong> <span class="value">${anovaResult.pValue < 0.05 ? 'Significant' : 'Not Significant'}</span></p>
-        <p><strong>Degrees of Freedom (Between):</strong> <span class="value">${anovaResult.dfBetween}</span></p>
-        <p><strong>Degrees of Freedom (Within):</strong> <span class="value">${anovaResult.dfWithin}</span></p>
-        <p><strong>Mean Square (Between):</strong> <span class="value">${formatNumber(anovaResult.msBetween)}</span></p>
-        <p><strong>Mean Square (Within):</strong> <span class="value">${formatNumber(anovaResult.msWithin)}</span></p>
+        <table class="table table-bordered table-sm mb-0">
+            <tbody>
+                <tr>
+                    <th>F-statistic
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Measures the ratio of between-group variance to within-group variance. Higher values indicate stronger evidence against the null hypothesis."></i>
+                    </th>
+                    <td>${formatNumber(anovaResult.fStat)}</td>
+                </tr>
+                <tr>
+                    <th>P-value
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Probability of obtaining results as extreme as the observed results, assuming the null hypothesis is true. Values < 0.05 typically indicate statistical significance."></i>
+                    </th>
+                    <td>${anovaResult.pValue.toExponential(4)}</td>
+                </tr>
+                <tr>
+                    <th>Significance
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Indicates whether the differences between groups are statistically significant (p < 0.05) or not."></i>
+                    </th>
+                    <td>${anovaResult.pValue < 0.05 ? 'Significant' : 'Not Significant'}</td>
+                </tr>
+                <tr>
+                    <th>Degrees of Freedom (Between)
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Number of independent groups minus 1. Represents the number of independent comparisons that can be made between group means."></i>
+                    </th>
+                    <td>${anovaResult.dfBetween}</td>
+                </tr>
+                <tr>
+                    <th>Degrees of Freedom (Within)
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Total number of observations minus the number of groups. Represents the number of independent pieces of information available for estimating within-group variation."></i>
+                    </th>
+                    <td>${anovaResult.dfWithin}</td>
+                </tr>
+                <tr>
+                    <th>Mean Square (Between)
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Variance between groups, calculated as the sum of squares between groups divided by degrees of freedom between."></i>
+                    </th>
+                    <td>${formatNumber(anovaResult.msBetween)}</td>
+                </tr>
+                <tr>
+                    <th>Mean Square (Within)
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="Variance within groups, calculated as the sum of squares within groups divided by degrees of freedom within."></i>
+                    </th>
+                    <td>${formatNumber(anovaResult.msWithin)}</td>
+                </tr>
+            </tbody>
+        </table>
     `;
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 }
 
 function updateSummaryStats(data) {
