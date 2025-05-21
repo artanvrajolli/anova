@@ -113,9 +113,10 @@ canvas {
 
 /* Grid Input Styles */
 .grid-input-container {
-    overflow-x: auto;
     position: relative;
     margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .removal-mode-indicator {
@@ -139,24 +140,65 @@ canvas {
     font-size: 1.1rem;
 }
 
+.grid-wrapper {
+    position: relative;
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #fff;
+}
+
 .grid-input {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     width: 100%;
     min-width: 500px;
     margin-bottom: 0;
+}
+
+.grid-input thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.grid-input th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.grid-input th.remove-col-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 11;
+    background-color: #f8f9fa;
+}
+
+.grid-input td.remove-row-cell {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background-color: #fff;
 }
 
 .grid-input th, .grid-input td {
     border: 1px solid #dee2e6;
     padding: 0.5rem;
     position: relative;
+    background-color: #fff;
 }
 
-.grid-input th {
+.grid-input tbody tr:nth-child(even) td {
     background-color: #f8f9fa;
-    position: sticky;
-    top: 0;
-    z-index: 1;
+}
+
+.grid-input tbody tr:nth-child(even) td.remove-row-cell {
+    background-color: #f8f9fa;
 }
 
 .grid-input .header-cell {
@@ -310,18 +352,9 @@ canvas {
     flex-wrap: wrap;
 }
 
-.grid-input-container {
-    position: relative;
-    margin-bottom: 1rem;
-}
-
 .grid-header {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 0.5rem;
-}
-
-.grid-wrapper {
     margin-bottom: 0.5rem;
 }
 
@@ -338,16 +371,6 @@ canvas {
     width: 100%;
     max-width: 200px;
     justify-content: center;
-}
-
-/* Update grid input container */
-.grid-input-container {
-    overflow-x: auto;
-    position: relative;
-}
-
-.grid-input {
-    margin-bottom: 0;
 }
 
 /* Analyze Button Specific Styles */

@@ -587,6 +587,13 @@ function addRow() {
         const cell = newRow.insertCell();
         cell.innerHTML = '<input type="number" step="any" placeholder="Enter score">';
     }
+
+    // Scroll to the bottom of the table
+    const gridWrapper = document.querySelector('.grid-wrapper');
+    gridWrapper.scrollTo({
+        top: gridWrapper.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 function addColumn() {
