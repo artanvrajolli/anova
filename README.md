@@ -25,7 +25,7 @@ A web-based tool for performing ANOVA (Analysis of Variance) on score data, feat
 
 ## Live Demo
 
-Visit the live demo at: [https://artanvrajolli.github.io/ANOVA_AIN_25/](https://artanvrajolli.github.io/ANOVA_AIN_25/)
+Visit the live demo at: [https://artanvrajolli.github.io/anova](https://artanvrajolli.github.io/anova)
 
 ## Usage
 
@@ -60,7 +60,7 @@ This is a static web application built with:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/artanvrajolli/ANOVA_AIN_25.git
+   git clone https://github.com/artanvrajolli/anova.git
    ```
 
 2. Open `index.html` in your browser or use a local server:

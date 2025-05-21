@@ -526,29 +526,44 @@ function removeRow(rowIndex) {
     }
 }
 
-function removeColumn(colIndex) {
+function removeColumn(clickedButton) {
     const table = document.getElementById('dataGrid');
     const headerRow = table.querySelector('thead tr');
     const rows = table.querySelectorAll('tbody tr');
+    
+    // Find the header cell by going up from the button through the column-header div
+    const headerCell = clickedButton.closest('.column-header').parentElement;
+    
+    // Find the clicked column's position in the DOM
+    const columnIndex = Array.from(headerRow.children).indexOf(headerCell);
+    
+    if (columnIndex === -1) {
+        console.error('Could not find column to remove');
+        return;
+    }
     
     if (headerRow.cells.length <= 2) { // Keep at least one data column
         alert('Cannot remove the last column');
         return;
     }
     
-    // Remove header cell
-    headerRow.deleteCell(colIndex + 1); // +1 because of the remove column
+    // Remove the header cell
+    headerRow.deleteCell(columnIndex);
     
-    // Remove cells from each row
+    // Remove cells from each row at the same index
     rows.forEach(row => {
-        row.deleteCell(colIndex + 1); // +1 because of the remove column
+        row.deleteCell(columnIndex);
     });
     
-    // Update column indices for remaining columns
+    // Update all remove buttons with new event handlers
     const headers = headerRow.getElementsByTagName('th');
     for (let i = 1; i < headers.length; i++) { // Start from 1 to skip remove column
         const removeBtn = headers[i].querySelector('.btn-remove-column');
-        removeBtn.onclick = () => removeColumn(i - 1);
+        if (removeBtn) {
+            removeBtn.onclick = function() {
+                removeColumn(this);
+            };
+        }
     }
 }
 
@@ -578,14 +593,13 @@ function addColumn() {
     const table = document.getElementById('dataGrid');
     const headerRow = table.querySelector('thead tr');
     const rows = table.querySelectorAll('tbody tr');
-    const colIndex = headerRow.cells.length - 1; // -1 because of the remove column
     
     // Add header cell with remove button
     const headerCell = headerRow.insertCell();
     headerCell.innerHTML = `
         <div class="column-header">
-            <input type="text" class="header-input" placeholder="Strategy ${colIndex}">
-            <button class="btn-remove-column" onclick="removeColumn(${colIndex - 1})" title="Remove column">
+            <input type="text" class="header-input" placeholder="Strategy ${headerRow.cells.length - 1}">
+            <button class="btn-remove-column" title="Remove column">
                 <i class="bi bi-x-circle"></i>
             </button>
         </div>
@@ -596,6 +610,12 @@ function addColumn() {
         const cell = row.insertCell();
         cell.innerHTML = '<input type="number" step="any" placeholder="Enter score">';
     });
+    
+    // Set up the remove button click handler
+    const removeBtn = headerCell.querySelector('.btn-remove-column');
+    removeBtn.onclick = function() {
+        removeColumn(this);
+    };
 }
 
 function getGridData() {
@@ -670,12 +690,18 @@ function resetGrid() {
     headerTh.innerHTML = `
         <div class="column-header">
             <input type="text" class="header-input" placeholder="Strategy 1">
-            <button class="btn-remove-column" onclick="removeColumn(0)" title="Remove column">
+            <button class="btn-remove-column" title="Remove column">
                 <i class="bi bi-x-circle"></i>
             </button>
         </div>
     `;
     headerRow.appendChild(headerTh);
+    
+    // Set up the remove button click handler
+    const removeBtn = headerTh.querySelector('.btn-remove-column');
+    removeBtn.onclick = function() {
+        removeColumn(this);
+    };
 
     // Reset to two empty rows with remove buttons
     tbody.innerHTML = '';
@@ -789,154 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // detect paste event in the document
-    document.addEventListener('paste', function(e) {
-        console.log('paste event detected');
-        console.log(e);
-    });
-
-
-    // Document-level paste listener
-    document.addEventListener('paste', function(e) {
-        // Only handle paste if it's not in an input field
-        if (e.target.tagName === 'INPUT') {
-            return;
-        }
-
-        const clipboardData = e.clipboardData || window.clipboardData;
-        const pastedText = clipboardData.getData('text');
-        
-        // Check if the pasted text looks like our data format
-        const firstLine = pastedText.split('\n')[0];
-        if (!firstLine.includes(',') && !firstLine.includes('\t')) {
-            return; // Not our format, let the default paste behavior happen
-        }
-
-        e.preventDefault(); // Prevent default paste only for our data format
-        
-        try {
-            // Parse the pasted data
-            const rows = pastedText.trim().split('\n').map(row => {
-                // Split by comma or tab, but respect quoted values
-                const cells = [];
-                let currentCell = '';
-                let insideQuotes = false;
-                const separator = row.includes('\t') ? '\t' : ',';
-                
-                for (let i = 0; i < row.length; i++) {
-                    const char = row[i];
-                    
-                    if (char === '"') {
-                        insideQuotes = !insideQuotes;
-                    } else if (char === separator && !insideQuotes) {
-                        cells.push(cleanCellValue(currentCell));
-                        currentCell = '';
-                    } else {
-                        currentCell += char;
-                    }
-                }
-                
-                // Add the last cell
-                cells.push(cleanCellValue(currentCell));
-                return cells;
-            });
-
-            if (rows.length < 2) {
-                throw new Error('Pasted data must have at least a header row and one data row');
-            }
-
-            // Validate that all rows have the same number of columns
-            const columnCount = rows[0].length;
-            if (!rows.every(row => row.length === columnCount)) {
-                throw new Error('All rows must have the same number of columns');
-            }
-
-            // Clear existing grid
-            const headerRow = document.querySelector('#dataGrid thead tr');
-            const tbody = document.querySelector('#dataGrid tbody');
-            headerRow.innerHTML = '';
-            tbody.innerHTML = '';
-
-            // Add remove column header cell
-            const removeColHeader = document.createElement('th');
-            removeColHeader.className = 'remove-col-header';
-            headerRow.appendChild(removeColHeader);
-
-            // Add headers with remove buttons
-            rows[0].forEach((header, colIndex) => {
-                const th = document.createElement('th');
-                th.innerHTML = `
-                    <div class="column-header">
-                        <input type="text" class="header-input" value="${header}">
-                        <button class="btn-remove-column" onclick="removeColumn(${colIndex})" title="Remove column">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                    </div>
-                `;
-                headerRow.appendChild(th);
-            });
-
-            // Add data rows with remove buttons
-            for (let i = 1; i < rows.length; i++) {
-                const tr = document.createElement('tr');
-                
-                // Add remove row button cell
-                const removeCell = document.createElement('td');
-                removeCell.className = 'remove-row-cell';
-                removeCell.innerHTML = `
-                    <button class="btn-remove-row" onclick="removeRow(${i-1})" title="Remove row">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                `;
-                tr.appendChild(removeCell);
-
-                // Add data cells
-                rows[i].forEach(value => {
-                    const td = document.createElement('td');
-                    const input = document.createElement('input');
-                    input.type = 'number';
-                    input.step = 'any';
-                    
-                    // Clean the value: remove commas and any extra spaces
-                    const cleanValue = value.replace(/,/g, '').trim();
-                    
-                    // Validate that it's a number
-                    const numValue = parseFloat(cleanValue);
-                    if (isNaN(numValue)) {
-                        throw new Error(`Invalid number in row ${i + 1}: "${value}"`);
-                    }
-                    
-                    input.value = cleanValue;
-                    td.appendChild(input);
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            }
-
-            // Show success indicator
-            const indicator = document.getElementById('pasteIndicator');
-            indicator.textContent = `Successfully pasted ${rows.length - 1} rows of data`;
-            indicator.style.display = 'block';
-            setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2000);
-
-            // Automatically trigger analysis
-            document.getElementById('analyzeBtn').click();
-
-            // Focus the first input in the grid
-            const firstInput = document.querySelector('#dataGrid input');
-            if (firstInput) {
-                firstInput.focus();
-            }
-
-        } catch (error) {
-            console.error('Paste error:', error);
-            const errorAlert = document.getElementById('errorAlert');
-            errorAlert.textContent = `Error pasting data: ${error.message}`;
-            errorAlert.style.display = 'block';
-        }
-    });
 
     // Update keyboard shortcut handler
     document.addEventListener('keydown', function(e) {
@@ -1073,12 +951,18 @@ function handleCSVUpload(event) {
                 th.innerHTML = `
                     <div class="column-header">
                         <input type="text" class="header-input" value="${header}">
-                        <button class="btn-remove-column" onclick="removeColumn(${colIndex})" title="Remove column">
+                        <button class="btn-remove-column" title="Remove column">
                             <i class="bi bi-x-circle"></i>
                         </button>
                     </div>
                 `;
                 headerRow.appendChild(th);
+                
+                // Set up the remove button click handler
+                const removeBtn = th.querySelector('.btn-remove-column');
+                removeBtn.onclick = function() {
+                    removeColumn(this);
+                };
             });
 
             // Add data rows with remove buttons
