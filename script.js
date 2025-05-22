@@ -136,6 +136,10 @@ function createScoreChart(data) {
     const maxLength = Math.max(...datasets.map(d => d.data.length));
     const labels = Array.from({length: maxLength}, (_, i) => i + 1);
 
+    // Calculate critical mean (grand mean of all scores)
+    const allScores = Object.values(data).flat();
+    const criticalMean = calculateMean(allScores);
+
     scoreChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -155,6 +159,25 @@ function createScoreChart(data) {
                             return `${context.dataset.label}: ${formatNumber(context.raw)}`;
                         }
                     }
+                },
+                annotation: {
+                    annotations: {
+                        criticalLine: {
+                            type: 'line',
+                            yMin: criticalMean,
+                            yMax: criticalMean,
+                            borderColor: 'rgb(255, 0, 0)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                content: `Critical Mean: ${formatNumber(criticalMean)}`,
+                                enabled: true,
+                                position: 'start',
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                padding: 4
+                            }
+                        }
+                    }
                 }
             },
             scales: {
@@ -162,8 +185,15 @@ function createScoreChart(data) {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
+                            if (value === criticalMean) {
+                                return `Critical Mean: ${formatNumber(value)}`;
+                            }
                             return formatNumber(value);
                         }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Score'
                     }
                 }
             }
@@ -181,9 +211,21 @@ function updateANOVA(data) {
     }
 
     const anovaResult = calculateANOVA(groups);
+    
+    // Calculate critical mean (grand mean of all scores)
+    const allScores = Object.values(data).flat();
+    const criticalMean = calculateMean(allScores);
+
     anovaDiv.innerHTML = `
         <table class="table table-bordered table-sm mb-0">
             <tbody>
+                <tr>
+                    <th>Critical Mean
+                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                           title="The average of all scores across all strategies. This represents the overall mean performance."></i>
+                    </th>
+                    <td>${formatNumber(criticalMean)}</td>
+                </tr>
                 <tr>
                     <th>F-statistic
                         <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
@@ -307,6 +349,10 @@ function createBoxPlot(data) {
         };
     });
 
+    // Calculate critical mean (grand mean of all scores)
+    const allScores = Object.values(data).flat();
+    const criticalMean = calculateMean(allScores);
+
     if (boxPlotChart) {
         boxPlotChart.destroy();
     }
@@ -390,6 +436,25 @@ function createBoxPlot(data) {
                             }
                         }
                     }
+                },
+                annotation: {
+                    annotations: {
+                        criticalLine: {
+                            type: 'line',
+                            yMin: criticalMean,
+                            yMax: criticalMean,
+                            borderColor: 'rgb(255, 0, 0)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                content: `Critical Mean: ${formatNumber(criticalMean)}`,
+                                enabled: true,
+                                position: 'start',
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                padding: 4
+                            }
+                        }
+                    }
                 }
             },
             scales: {
@@ -404,8 +469,15 @@ function createBoxPlot(data) {
                     stacked: true,
                     ticks: {
                         callback: function(value) {
+                            if (value === criticalMean) {
+                                return `Critical Mean: ${formatNumber(value)}`;
+                            }
                             return formatNumber(value);
                         }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Score'
                     }
                 }
             }
@@ -456,6 +528,10 @@ function createHistogram(data) {
         };
     });
 
+    // Calculate critical mean (grand mean of all scores)
+    const allScores = Object.values(data).flat();
+    const criticalMean = calculateMean(allScores);
+
     if (histogramChart) {
         histogramChart.destroy();
     }
@@ -484,15 +560,28 @@ function createHistogram(data) {
                 title: {
                     display: true,
                     text: 'Score Distribution Histogram'
+                },
+                annotation: {
+                    annotations: {
+                        criticalLine: {
+                            type: 'line',
+                            xMin: criticalMean,
+                            xMax: criticalMean,
+                            borderColor: 'rgb(255, 0, 0)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                content: `Critical Mean: ${formatNumber(criticalMean)}`,
+                                enabled: true,
+                                position: 'start',
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                padding: 4
+                            }
+                        }
+                    }
                 }
             },
             scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Score Range'
-                    }
-                },
                 y: {
                     beginAtZero: true,
                     title: {
@@ -535,7 +624,23 @@ function updateCorrelationMatrix(data) {
     const matrix = calculateCorrelationMatrix(data);
     const strategies = Object.keys(data);
     
-    let html = '<div class="table-responsive"><table class="table table-sm">';
+    // Create container for matrix and download button
+    const container = document.createElement('div');
+    container.className = 'correlation-matrix-container';
+    
+    // Create header with title and download button
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'd-flex justify-content-between align-items-center mb-3';
+    headerDiv.innerHTML = `
+        <h5 class="card-title mb-0">Correlation Matrix</h5>
+        <button class="btn btn-outline-primary btn-sm download-btn" onclick="downloadCorrelationMatrix()">
+            <i class="bi bi-download"></i> Download
+        </button>
+    `;
+    container.appendChild(headerDiv);
+    
+    // Create matrix table
+    let html = '<div class="table-responsive"><table class="table table-sm" id="correlationMatrixTable">';
     
     // Header row
     html += '<thead><tr><th></th>';
@@ -559,7 +664,70 @@ function updateCorrelationMatrix(data) {
     });
     
     html += '</tbody></table></div>';
-    matrixDiv.innerHTML = html;
+    
+    // Add table to container
+    const tableDiv = document.createElement('div');
+    tableDiv.innerHTML = html;
+    container.appendChild(tableDiv);
+    
+    // Clear and update matrix div
+    matrixDiv.innerHTML = '';
+    matrixDiv.appendChild(container);
+}
+
+// Function to download correlation matrix as PNG
+async function downloadCorrelationMatrix() {
+    try {
+        // Check if html2canvas is loaded
+        if (typeof html2canvas === 'undefined') {
+            // Load html2canvas dynamically
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+            document.head.appendChild(script);
+            
+            // Wait for script to load
+            await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+            });
+        }
+        
+        const table = document.getElementById('correlationMatrixTable');
+        if (!table) {
+            throw new Error('Correlation matrix table not found');
+        }
+        
+        const button = table.closest('.correlation-matrix-container').querySelector('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        button.disabled = true;
+        
+        // Convert table to canvas
+        const canvas = await html2canvas(table, {
+            scale: 2, // Higher quality
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true
+        });
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `correlation-matrix-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+    } catch (error) {
+        console.error('Error downloading correlation matrix:', error);
+        alert('Error downloading correlation matrix: ' + error.message);
+    }
 }
 
 // Grid Input Functions
