@@ -216,74 +216,153 @@ function updateANOVA(data) {
     const allScores = Object.values(data).flat();
     const criticalMean = calculateMean(allScores);
 
-    anovaDiv.innerHTML = `
-        <table class="table table-bordered table-sm mb-0">
-            <tbody>
-                <tr>
-                    <th>Critical Mean
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="The average of all scores across all strategies. This represents the overall mean performance."></i>
-                    </th>
-                    <td>${formatNumber(criticalMean)}</td>
-                </tr>
-                <tr>
-                    <th>F-statistic
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Measures the ratio of between-group variance to within-group variance. Higher values indicate stronger evidence against the null hypothesis."></i>
-                    </th>
-                    <td>${formatNumber(anovaResult.fStat)}</td>
-                </tr>
-                <tr>
-                    <th>P-value
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Probability of obtaining results as extreme as the observed results, assuming the null hypothesis is true. Values < 0.05 typically indicate statistical significance."></i>
-                    </th>
-                    <td>${anovaResult.pValue.toExponential(4)}</td>
-                </tr>
-                <tr>
-                    <th>Significance
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Indicates whether the differences between groups are statistically significant (p < 0.05) or not."></i>
-                    </th>
-                    <td>${anovaResult.pValue < 0.05 ? 'Significant' : 'Not Significant'}</td>
-                </tr>
-                <tr>
-                    <th>Degrees of Freedom (Between)
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Number of independent groups minus 1. Represents the number of independent comparisons that can be made between group means."></i>
-                    </th>
-                    <td>${anovaResult.dfBetween}</td>
-                </tr>
-                <tr>
-                    <th>Degrees of Freedom (Within)
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Total number of observations minus the number of groups. Represents the number of independent pieces of information available for estimating within-group variation."></i>
-                    </th>
-                    <td>${anovaResult.dfWithin}</td>
-                </tr>
-                <tr>
-                    <th>Mean Square (Between)
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Variance between groups, calculated as the sum of squares between groups divided by degrees of freedom between."></i>
-                    </th>
-                    <td>${formatNumber(anovaResult.msBetween)}</td>
-                </tr>
-                <tr>
-                    <th>Mean Square (Within)
-                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
-                           title="Variance within groups, calculated as the sum of squares within groups divided by degrees of freedom within."></i>
-                    </th>
-                    <td>${formatNumber(anovaResult.msWithin)}</td>
-                </tr>
-            </tbody>
-        </table>
+    // Create container for ANOVA results and download button
+    const container = document.createElement('div');
+    container.className = 'anova-results-container';
+    
+    // Create header with title and download button
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'd-flex justify-content-between align-items-center mb-3';
+    headerDiv.innerHTML = `
+        <h5 class="card-title mb-0">ANOVA Results</h5>
+        <button class="btn btn-outline-primary btn-sm download-btn" onclick="downloadANOVAResults()">
+            <i class="bi bi-download"></i> Download
+        </button>
     `;
+    container.appendChild(headerDiv);
+
+    // Create table div
+    const tableDiv = document.createElement('div');
+    tableDiv.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0" id="anovaResultsTable">
+                <tbody>
+                    <tr>
+                        <th>Critical Mean
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="The average of all scores across all strategies. This represents the overall mean performance."></i>
+                        </th>
+                        <td>${formatNumber(criticalMean)}</td>
+                    </tr>
+                    <tr>
+                        <th>F-statistic
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Measures the ratio of between-group variance to within-group variance. Higher values indicate stronger evidence against the null hypothesis."></i>
+                        </th>
+                        <td>${formatNumber(anovaResult.fStat)}</td>
+                    </tr>
+                    <tr>
+                        <th>P-value
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Probability of obtaining results as extreme as the observed results, assuming the null hypothesis is true. Values < 0.05 typically indicate statistical significance."></i>
+                        </th>
+                        <td>${anovaResult.pValue.toExponential(4)}</td>
+                    </tr>
+                    <tr>
+                        <th>Significance
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Indicates whether the differences between groups are statistically significant (p < 0.05) or not."></i>
+                        </th>
+                        <td>${anovaResult.pValue < 0.05 ? 'Significant' : 'Not Significant'}</td>
+                    </tr>
+                    <tr>
+                        <th>Degrees of Freedom (Between)
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Number of independent groups minus 1. Represents the number of independent comparisons that can be made between group means."></i>
+                        </th>
+                        <td>${anovaResult.dfBetween}</td>
+                    </tr>
+                    <tr>
+                        <th>Degrees of Freedom (Within)
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Total number of observations minus the number of groups. Represents the number of independent pieces of information available for estimating within-group variation."></i>
+                        </th>
+                        <td>${anovaResult.dfWithin}</td>
+                    </tr>
+                    <tr>
+                        <th>Mean Square (Between)
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Variance between groups, calculated as the sum of squares between groups divided by degrees of freedom between."></i>
+                        </th>
+                        <td>${formatNumber(anovaResult.msBetween)}</td>
+                    </tr>
+                    <tr>
+                        <th>Mean Square (Within)
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" 
+                               title="Variance within groups, calculated as the sum of squares within groups divided by degrees of freedom within."></i>
+                        </th>
+                        <td>${formatNumber(anovaResult.msWithin)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    container.appendChild(tableDiv);
+
+    // Clear and update ANOVA div
+    anovaDiv.innerHTML = '';
+    anovaDiv.appendChild(container);
 
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+}
+
+// Function to download ANOVA results as PNG
+async function downloadANOVAResults() {
+    try {
+        // Check if html2canvas is loaded
+        if (typeof html2canvas === 'undefined') {
+            // Load html2canvas dynamically
+            const script = document.createElement('script');
+            script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+            document.head.appendChild(script);
+            
+            // Wait for script to load
+            await new Promise((resolve, reject) => {
+                script.onload = resolve;
+                script.onerror = reject;
+            });
+        }
+        
+        const table = document.getElementById('anovaResultsTable');
+        if (!table) {
+            throw new Error('ANOVA results table not found');
+        }
+        
+        const button = table.closest('.anova-results-container').querySelector('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        button.disabled = true;
+        
+        // Convert table to canvas
+        const canvas = await html2canvas(table, {
+            scale: 2, // Higher quality
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true
+        });
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `anova-results-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+    } catch (error) {
+        console.error('Error downloading ANOVA results:', error);
+        alert('Error downloading ANOVA results: ' + error.message);
+    }
 }
 
 function updateSummaryStats(data) {
@@ -1321,6 +1400,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     console.log('Paste button event listener attached');
+
+    // Add export button next to Analyze Data button
+    const analyzeBtnContainer = document.querySelector('.text-end.mt-3');
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'btn btn-outline-secondary me-2';
+    exportBtn.innerHTML = '<i class="bi bi-file-earmark-spreadsheet"></i> Grid to CSV';
+    exportBtn.onclick = downloadGridData;
+    analyzeBtnContainer.insertBefore(exportBtn, analyzeBtnContainer.firstChild);
 });
 
 // CSV file upload handling
@@ -1549,4 +1636,52 @@ function downloadChart(chartId) {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }, 'image/png');
+}
+
+// Function to download grid data as CSV
+function downloadGridData() {
+    try {
+        // Get headers and data
+        const headers = Array.from(document.querySelectorAll('#dataGrid thead input'))
+            .map(input => input.value.trim())
+            .filter(value => value !== '');
+
+        if (headers.length === 0) {
+            throw new Error('Please enter at least one strategy name in the header row');
+        }
+
+        // Get all rows
+        const rows = document.querySelectorAll('#dataGrid tbody tr');
+        const csvRows = [];
+
+        // Add header row
+        csvRows.push(headers.map(header => `"${header}"`).join(','));
+
+        // Add data rows
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const rowData = Array.from(inputs).map(input => {
+                const value = input.value.trim();
+                return value === '' ? '' : value;
+            });
+            csvRows.push(rowData.join(','));
+        });
+
+        // Create CSV content
+        const csvContent = csvRows.join('\n');
+
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `grid-data-${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    } catch (error) {
+        console.error('Error downloading grid data:', error);
+        alert('Error downloading grid data: ' + error.message);
+    }
 } 
