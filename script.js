@@ -841,11 +841,41 @@ function resetGrid() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event fired');
+    
     // Add Bootstrap Icons
     const link = document.createElement('link');
     link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
+
+    // Create removal mode indicator if it doesn't exist
+    if (!document.getElementById('removalModeIndicator')) {
+        const indicator = document.createElement('div');
+        indicator.id = 'removalModeIndicator';
+        indicator.style.display = 'none';
+        indicator.style.position = 'fixed';
+        indicator.style.top = '10px';
+        indicator.style.left = '50%';
+        indicator.style.transform = 'translateX(-50%)';
+        indicator.style.backgroundColor = '#ffc107';
+        indicator.style.color = '#000';
+        indicator.style.padding = '8px 16px';
+        indicator.style.borderRadius = '4px';
+        indicator.style.zIndex = '1000';
+        indicator.style.alignItems = 'center';
+        indicator.style.gap = '8px';
+        
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-exclamation-triangle';
+        
+        const text = document.createElement('span');
+        text.id = 'removalModeText';
+        
+        indicator.appendChild(icon);
+        indicator.appendChild(text);
+        document.body.appendChild(indicator);
+    }
 
     // Analyze button click handler
     document.getElementById('analyzeBtn').addEventListener('click', function() {
@@ -945,6 +975,184 @@ document.addEventListener('DOMContentLoaded', function() {
             disableRemovalMode();
         }
     });
+
+    // Add paste button click handler
+    const pasteBtn = document.getElementById('pasteBtn');
+    console.log('Paste button element:', pasteBtn);
+    
+    if (!pasteBtn) {
+        console.error('Paste button not found');
+        return;
+    }
+
+    // Create a hidden textarea for fallback paste
+    const textarea = document.createElement('textarea');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+
+    // Add click handler directly to the button
+    pasteBtn.onclick = async function(e) {
+        console.log('Paste button clicked');
+        e.preventDefault();
+        
+        try {
+            let clipboardText;
+            
+            // Try using the Clipboard API first
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                console.log('Using Clipboard API...');
+                clipboardText = await navigator.clipboard.readText();
+            } else {
+                // Fallback: Use a temporary textarea
+                console.log('Using fallback paste method...');
+                textarea.value = '';
+                textarea.focus();
+                
+                // Wait for paste event
+                const pastePromise = new Promise(resolve => {
+                    textarea.onpaste = function(e) {
+                        e.preventDefault();
+                        resolve(textarea.value);
+                    };
+                });
+                
+                // Trigger paste
+                document.execCommand('paste');
+                clipboardText = await pastePromise;
+            }
+            
+            console.log('Clipboard content:', clipboardText);
+            
+            if (!clipboardText.trim()) {
+                throw new Error('Clipboard is empty');
+            }
+
+            // Parse clipboard text into rows
+            const rows = clipboardText.trim().split('\n').map(row => {
+                // Split by tab only, preserving spaces within values
+                const cells = row.split('\t').map(cell => cleanCellValue(cell));
+                console.log('Parsed row:', cells);
+                return cells;
+            });
+
+            console.log('Parsed rows:', rows);
+
+            if (rows.length < 2) {
+                throw new Error('Pasted data must have at least a header row and one data row');
+            }
+
+            // Validate that all rows have the same number of columns
+            const columnCount = rows[0].length;
+            if (!rows.every(row => row.length === columnCount)) {
+                throw new Error('All rows must have the same number of columns');
+            }
+
+            // Validate headers
+            if (rows[0].some(header => !header.trim())) {
+                throw new Error('All columns must have a header name');
+            }
+
+            // Validate data rows
+            for (let i = 1; i < rows.length; i++) {
+                for (let j = 0; j < rows[i].length; j++) {
+                    const value = rows[i][j];
+                    if (value === '') continue; // Allow empty cells
+                    
+                    // Remove commas and validate number
+                    const numValue = parseFloat(value.replace(/,/g, ''));
+                    if (isNaN(numValue)) {
+                        throw new Error(`Invalid number in row ${i + 1}, column ${j + 1}: "${value}"`);
+                    }
+                }
+            }
+
+            // Clear existing grid
+            const headerRow = document.querySelector('#dataGrid thead tr');
+            const tbody = document.querySelector('#dataGrid tbody');
+            headerRow.innerHTML = '';
+            tbody.innerHTML = '';
+
+            // Add remove column header cell
+            const removeColHeader = document.createElement('th');
+            removeColHeader.className = 'remove-col-header';
+            headerRow.appendChild(removeColHeader);
+
+            // Add headers with remove buttons
+            rows[0].forEach((header, colIndex) => {
+                const th = document.createElement('th');
+                th.innerHTML = `
+                    <div class="column-header">
+                        <input type="text" class="header-input" value="${header}">
+                        <button class="btn-remove-column" title="Remove column">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                `;
+                headerRow.appendChild(th);
+                
+                // Set up the remove button click handler
+                const removeBtn = th.querySelector('.btn-remove-column');
+                removeBtn.onclick = function() {
+                    removeColumn(this);
+                };
+            });
+
+            // Add data rows with remove buttons
+            for (let i = 1; i < rows.length; i++) {
+                const tr = document.createElement('tr');
+                
+                // Add remove row button cell
+                const removeCell = document.createElement('td');
+                removeCell.className = 'remove-row-cell';
+                removeCell.innerHTML = `
+                    <button class="btn-remove-row" onclick="removeRow(${i-1})" title="Remove row">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                `;
+                tr.appendChild(removeCell);
+
+                // Add data cells
+                rows[i].forEach(value => {
+                    const td = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 'any';
+                    input.value = value;
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
+
+            // Show success indicator
+            const indicator = document.getElementById('pasteIndicator');
+            indicator.textContent = `Successfully pasted ${rows.length - 1} rows`;
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+
+            // Automatically trigger analysis
+            document.getElementById('analyzeBtn').click();
+
+        } catch (error) {
+            console.error('Paste error:', error);
+            const errorAlert = document.getElementById('errorAlert');
+            if (errorAlert) {
+                errorAlert.textContent = `Error pasting data: ${error.message}`;
+                errorAlert.style.display = 'block';
+            } else {
+                console.error('Error alert element not found');
+            }
+        } finally {
+            // Clean up the textarea
+            textarea.value = '';
+            textarea.blur();
+        }
+    };
+
+    console.log('Paste button event listener attached');
 });
 
 // CSV file upload handling
@@ -1118,20 +1326,27 @@ function enableColumnRemoval() {
 function disableRemovalMode() {
     currentRemovalMode = null;
     updateRemovalModeUI();
-    document.querySelectorAll('#dataGrid .removal-mode').forEach(el => {
-        el.classList.remove('removal-mode');
-    });
+    // Only try to remove classes if elements exist
+    const removalElements = document.querySelectorAll('#dataGrid .removal-mode');
+    if (removalElements.length > 0) {
+        removalElements.forEach(el => {
+            el.classList.remove('removal-mode');
+        });
+    }
 }
 
 function updateRemovalModeUI() {
     const indicator = document.getElementById('removalModeIndicator');
     const modeText = document.getElementById('removalModeText');
     
-    if (currentRemovalMode) {
-        indicator.style.display = 'flex';
-        modeText.textContent = `Click on a ${currentRemovalMode} to remove it`;
-    } else {
-        indicator.style.display = 'none';
+    // Only update UI if elements exist
+    if (indicator && modeText) {
+        if (currentRemovalMode) {
+            indicator.style.display = 'flex';
+            modeText.textContent = `Click on a ${currentRemovalMode} to remove it`;
+        } else {
+            indicator.style.display = 'none';
+        }
     }
 }
 

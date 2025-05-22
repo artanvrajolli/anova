@@ -175,11 +175,14 @@
 
                         <div class="grid-controls">
                             <div class="grid-controls-main">
-                                <button class="btn btn-outline-warning" onclick="resetGrid()">
+                                <button class="btn btn-sm btn-outline-danger py-2" onclick="resetGrid()">
                                     <i class="bi bi-trash"></i> Clear Grid
                                 </button>
+                                <button id="pasteBtn" class="btn btn-sm btn-outline-primary py-2">
+                                    <i class="bi bi-clipboard"></i> Paste Data
+                                </button>
                                 <div class="file-upload">
-                                    <label class="file-upload-label">
+                                    <label class="file-upload-label  btn-sm py-2">
                                         <i class="bi bi-upload"></i> Upload CSV
                                         <input type="file" id="csvFile" accept=".csv" onchange="handleCSVUpload(event)">
                                     </label>
