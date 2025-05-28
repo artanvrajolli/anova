@@ -36,16 +36,6 @@ Visit the live demo at: [https://artanvrajolli.github.io/anova](https://artanvra
 3. Click "Analyze Data" to generate results
 4. View the visualizations and statistical analysis
 
-## Data Format
-
-Your data should be organized as follows:
-
-```
-Strategy1, Strategy2, Strategy3
-score1,   score2,   score3
-score4,   score5,   score6
-...
-```
 
 ## Development
 

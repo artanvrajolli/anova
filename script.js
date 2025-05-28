@@ -1148,6 +1148,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide analysis content on error
             analysisContent.classList.remove('visible');
         }
+
+        if (analysisContent.classList.contains('visible')) {
+            analysisContent.scrollIntoView({ behavior: 'smooth' });
+        }
+
     });
 
     // Update keyboard shortcut handler
