@@ -23,6 +23,20 @@ A web-based tool for performing ANOVA (Analysis of Variance) on score data, feat
   - Summary statistics
 - Responsive design for all devices
 
+## Visual Demo
+
+### ANOVA Results Dashboard
+![ANOVA Results](./screenshot/demo_1_results.png)
+*Comprehensive ANOVA analysis results showing statistical metrics, significance testing, and summary statistics for different strategies*
+
+### Interactive Data Input Grid
+![Data Input Interface](./screenshot/demo_2_input_grid.png)
+*User-friendly data entry interface with support for strategy names and score values, plus CSV upload functionality*
+
+### Advanced Plot Analysis
+![Plot Analysis](./screenshot/demo_3_plot_analysis.png)
+*Detailed visualization suite including box plots, score distribution histograms, and statistical comparisons*
+
 ## Live Demo
 
 Visit the live demo at: [https://artanvrajolli.github.io/anova](https://artanvrajolli.github.io/anova)

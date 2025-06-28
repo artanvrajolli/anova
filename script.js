@@ -1086,6 +1086,102 @@ function resetGrid() {
     disableRemovalMode();
 }
 
+// Function to load demo_1 data
+function loadDemo1Data() {
+    // Demo data headers and values
+    const headers = [
+        "Best known from the literature",
+        "Google DeepMind", 
+        "Parallel Memtic Algorithm",
+        "Kamil Debowski (5th ranked solution)",
+        "Emil Indzhev (28th ranked solution)"
+    ];
+    
+    const dataRows = [
+        [5822900, 5822900, 5822900, 5822900, 5822900],
+        [5690888, 5690635, 5690888, 3429673, 5675932],
+        [5240809, 5238358, 5240809, 5236199, 4682232],
+        [5109000, 5103735, 5109000, 1022450, 4994860],
+        [5348248, 5348248, 5348248, 5348248, 5148969]
+    ];
+    
+    // Clear existing grid
+    const headerRow = document.querySelector('#dataGrid thead tr');
+    const tbody = document.querySelector('#dataGrid tbody');
+    headerRow.innerHTML = '';
+    tbody.innerHTML = '';
+
+    // Add remove column header cell
+    const removeColHeader = document.createElement('th');
+    removeColHeader.className = 'remove-col-header';
+    headerRow.appendChild(removeColHeader);
+
+    // Add headers with remove buttons
+    headers.forEach((header, colIndex) => {
+        const th = document.createElement('th');
+        th.innerHTML = `
+            <div class="column-header">
+                <input type="text" class="header-input" value="${header}">
+                <button class="btn-remove-column" title="Remove column">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+        `;
+        headerRow.appendChild(th);
+        
+        // Set up the remove button click handler
+        const removeBtn = th.querySelector('.btn-remove-column');
+        removeBtn.onclick = function() {
+            removeColumn(this);
+        };
+    });
+
+    // Add data rows with remove buttons
+    dataRows.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        
+        // Add remove row button cell
+        const removeCell = document.createElement('td');
+        removeCell.className = 'remove-row-cell';
+        removeCell.innerHTML = `
+            <button class="btn-remove-row" onclick="removeRow(${rowIndex})" title="Remove row">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        `;
+        tr.appendChild(removeCell);
+
+        // Add data cells
+        row.forEach(value => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = 'any';
+            input.value = value;
+            td.appendChild(input);
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+
+    // Remove ?demo_1 from URL
+    const url = new URL(window.location);
+    url.searchParams.delete('demo_1');
+    window.history.replaceState({}, document.title, url.pathname + url.search);
+
+    // Show success indicator
+    const indicator = document.getElementById('pasteIndicator');
+    indicator.textContent = `Demo data loaded successfully`;
+    indicator.style.display = 'block';
+    setTimeout(() => {
+        indicator.style.display = 'none';
+    }, 2000);
+
+    // Automatically trigger analysis
+    setTimeout(() => {
+        document.getElementById('analyzeBtn').click();
+    }, 500);
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded event fired');
@@ -1181,6 +1277,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize grid
     resetGrid();
+
+    // Check for demo_1 parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('demo_1')) {
+        loadDemo1Data();
+    }
 
     // Add click handlers for row and column removal
     const grid = document.getElementById('dataGrid');
